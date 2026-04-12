@@ -3,28 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Appuntamenti</title>
+    <title>Gestione Appuntamenti</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icona.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#1976d2">
 
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #ffffff; }
-        iframe { width: 100%; height: 100%; border: none; }
+        body { 
+          margin: 0; padding: 0; height: 100vh; 
+          display: flex; justify-content: center; align-items: center; 
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+          background: #f4f6f8; 
+        }
+        .loader-box { text-align: center; }
+        .spinner { 
+          border: 4px solid #f3f3f3; border-top: 4px solid #1976d2; 
+          border-radius: 50%; width: 45px; height: 45px; 
+          animation: spin 1s linear infinite; margin: 0 auto 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        p { color: #1976d2; font-weight: bold; font-size: 15px; }
     </style>
 </head>
 <body>
-    <iframe src="https://script.google.com/macros/s/AKfycbyHOuPV_3EgynO0o0bT5Pdp3cy2y8aar6d5h88v3fqz4p2CVXKFvme-AV1V0Cip6m3n9w/exec"></iframe>
+    <div class="loader-box">
+        <div class="spinner"></div>
+        <p id="stato-testo">Apertura Agenda in corso...</p>
+    </div>
 
     <script>
+      // ⚠️ ATTENZIONE: INCOLLA QUI IL TUO LINK UFFICIALE DI GOOGLE APP SCRIPT
+      const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycbw0gbVlEDIpW4WvlfDZBMZaR5_wKmJGpW97DAcmyWrU2Efhp5lPoQD7aW4ZjhgDN5v7qg/exec";
+
+      // 1. Registra il Service Worker per permettere l'installazione su Home
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('sw.js');
+          try {
+            // Evita errori in ambienti di test o protocolli non supportati (es. blob:)
+            if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+              navigator.serviceWorker.register('sw.js').catch(err => console.warn("SW non registrato:", err));
+            }
+          } catch(e) {
+            console.warn("Impossibile registrare il Service Worker in questo ambiente:", e);
+          }
         });
       }
+
+      // 2. Redirect immediato alla Web App di Google
+      // Usiamo replace per non "sporcare" la cronologia del tasto indietro del telefono
+      setTimeout(() => {
+        try {
+          // Controlla che il link sia valido prima di tentare il redirect
+          if (GOOGLE_APP_URL.startsWith("http")) {
+            window.location.replace(GOOGLE_APP_URL);
+          } else {
+            document.getElementById('stato-testo').innerText = "Attesa link valido in GOOGLE_APP_URL...";
+            console.warn("Inserisci un link URL valido per attivare il redirect.");
+          }
+        } catch(e) {
+          console.error("Errore durante il redirect:", e);
+        }
+      }, 500); // Mezzo secondo di delay per far vedere l'animazione di caricamento
     </script>
 </body>
 </html>
